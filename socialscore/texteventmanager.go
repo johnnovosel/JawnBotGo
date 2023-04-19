@@ -3,7 +3,10 @@ package socialscore
 import (
 	"encoding/json"
 	"log"
+	"math"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -23,10 +26,12 @@ func MessageEvaluatinator(s *discordgo.Session, m *discordgo.Message) {
 	}
 
 	updatePoints(m.Author.ID, points)
+
+	writeResponse(s, m, points)
 }
 
 func checkPointEvent(message string) (bool, int) {
-	value, exists := bigtext[message]
+	value, exists := bigtext[strings.ToLower(message)]
 
 	if exists {
 		return true, value.Points
@@ -52,5 +57,29 @@ func ReadMatchData() {
 
 	for _, obj := range mySlice {
 		bigtext[obj.Text] = obj
+	}
+}
+
+func writeResponse(s *discordgo.Session, m *discordgo.Message, points int) {
+
+	message := "<@" + m.Author.ID + ">"
+
+	if points > 0 {
+		message = message + " gained " + strconv.Itoa(points) + " social point for this sentence:\n\n" + m.Content
+	} else {
+		message = message + " lost " + strconv.Itoa(int(math.Abs(float64(points)))) + " social point for this sentence:\n\n" + m.Content
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title:       "POINT EVENT",
+		Description: message,
+		Color:       0x00ff00, // Green
+	}
+
+	var err error
+
+	_, err = s.ChannelMessageSendEmbed("168486914356281344", embed)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
