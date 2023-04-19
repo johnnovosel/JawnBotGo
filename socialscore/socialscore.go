@@ -39,7 +39,7 @@ func ReadUserFile() {
 	}
 }
 
-func WriteJSONFile() error {
+func WriteJSONFile() {
 
 	var userSlice []Data
 	for _, user := range bigdata {
@@ -49,16 +49,14 @@ func WriteJSONFile() error {
 	// Marshal struct to JSON
 	jsonData, err := json.MarshalIndent(userSlice, "", "    ")
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	// Write JSON data to file
 	err = os.WriteFile("socialscore\\db.json", jsonData, 0644)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-
-	return nil
 }
 
 func AddUser(userID string, name string) {
@@ -69,6 +67,8 @@ func AddUser(userID string, name string) {
 	}
 
 	bigdata[user.DiscordID] = *user
+
+	WriteJSONFile()
 }
 
 func BulkAddUser(members []*discordgo.Member) {
@@ -120,7 +120,7 @@ func GiveStatsForUser(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	responseString := "<@" + bigdata[userID].DiscordID + ">'s score is " + strconv.Itoa(bigdata[userID].Score)
 
 	embed := &discordgo.MessageEmbed{
-		Title:       "Social Score",
+		Title:       "Social Points",
 		Description: responseString,
 		Color:       808000,
 	}

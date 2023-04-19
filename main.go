@@ -13,6 +13,7 @@ import (
 func main() {
 
 	socialscore.ReadUserFile()
+	socialscore.ReadMatchData()
 
 	dg, err := discordgo.New("Bot " + os.Getenv("BOT_TOKEN"))
 	if err != nil {
@@ -20,12 +21,13 @@ func main() {
 		return
 	}
 
-	// Register the messageCreate func as a callback for MessageCreate events.
+	// callback functions for Message Create and Slash Command events
 	dg.AddHandler(messageCreate)
 	dg.AddHandler(handleCommand)
 
 	// grab all the users of the server and add them to the db
 	dg.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+
 		// idk how to do it for multiple guilds rn lmao
 		if len(r.Guilds) > 0 {
 			guildID := r.Guilds[0].ID
@@ -77,17 +79,13 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func handleMessage(s *discordgo.Session, m *discordgo.Message) {
 
-	// i hate pleb bot
-	if m.Author.ID == "168209080115134464" {
-		socialscore.CheckPointAdjustment(m)
-	}
-
-	//then we send the message to see if they gain or lose points
-	socialscore.CheckPointAdjustment(m)
+	// this used to do more than just call another function but keeping this
+	// here in case i want to do more with messages than just this
+	socialscore.MessageEvaluatinator(s, m)
 }
 
 func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if i.ApplicationCommandData().Name == "ss" {
+	if i.ApplicationCommandData().Name == "s" {
 		command := i.ApplicationCommandData().Options[0].StringValue()
 
 		if command == "mystats" {
@@ -99,33 +97,35 @@ func handleCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 func registerCommands(s *discordgo.Session) {
 
 	cmd := &discordgo.ApplicationCommand{
-		Name:        "ss",
-		Description: "social score commands",
+		Name:        "s",
+		Description: "social points commands",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "command",
-				Description: "what Social Score command do you want",
+				Description: "what Social Points command do you want",
 				Required:    true,
 			},
 		},
 	}
-	_, err := s.ApplicationCommandCreate(s.State.User.ID, "931418680074596452", cmd)
+
+	_, err := s.ApplicationCommandCreate(s.State.User.ID, "125385898593484800", cmd)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func deleteCommands(s *discordgo.Session) {
+
 	// get the list of commands
-	commands, err := s.ApplicationCommands(s.State.User.ID, "")
+	commands, err := s.ApplicationCommands(s.State.User.ID, "125385898593484800")
 	if err != nil {
 		fmt.Println("Error getting commands:", err)
 		return
 	}
 
 	for _, command := range commands {
-		err = s.ApplicationCommandDelete(s.State.User.ID, "", command.ID)
+		err = s.ApplicationCommandDelete(s.State.User.ID, "125385898593484800", command.ID)
 		if err != nil {
 			fmt.Printf("Error deleting command %s: %s\n", command.Name, err)
 		}
